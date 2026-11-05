@@ -139,6 +139,16 @@ body.editing #sh-gps{display:block}
 #edbar .btn{padding:8px 4px;font-size:12px;flex:1;white-space:nowrap}
 .ed-top{display:flex;align-items:center;gap:10px}.ed-prog{width:90px;height:6px;border-radius:9px;background:var(--surface-2);overflow:hidden}.ed-prog i{display:block;height:100%;width:0;background:#00843D}
 .ed-btns{display:flex;gap:5px}
+.ed-task{display:flex;align-items:center;gap:12px;background:var(--surface-2);border-radius:12px;padding:10px 12px}
+.ed-task .chipicon{width:34px;height:34px}.ed-task .chipicon .mk{left:17px;top:17px}.ed-task .chipicon .mk .s{--k:1.25}
+.tk-tx{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.35}.tk-tx small{font-size:11.5px;color:var(--muted)}.tk-tx b{font-family:var(--fd);font-weight:400;font-size:19px;direction:ltr;text-align:right}.tk-tx span{font-size:12.5px;color:var(--muted)}
+#edbar .btn.big{flex:none;width:100%;padding:13px;font-size:15px}
+.ed-more{display:grid;grid-template-columns:1fr 1fr;gap:6px}.ed-more[hidden]{display:none}#edbar .ed-more .btn{white-space:normal;padding:9px 6px}
+body.editing #panel,body.editing #float{display:none}
+body.editing .mk:not(.target):not(.edited) .s{opacity:.4}
+.mk.target{z-index:40}.mk.target .s{opacity:1!important;outline:3px solid #00B15C;outline-offset:3px}
+.mk.target::after{content:"";position:absolute;left:0;top:0;width:44px;height:44px;border-radius:50%;border:3px solid #00B15C;transform:translate(-50%,-50%) scale(var(--k,1));animation:ping 1.6s ease-out infinite;pointer-events:none}
+#stage.iso .mk.target::after{top:-14px}
 .sv-modal{inset:0;z-index:46;background:rgba(5,15,40,.55);display:flex;align-items:flex-end;justify-content:center;padding:12px}
 .sv-modal[hidden]{display:none}
 .sv-box{background:var(--surface);border-radius:18px;padding:14px;width:min(520px,100%);max-height:80vh;display:flex;flex-direction:column;gap:10px}
@@ -338,14 +348,20 @@ body.touring #panel,body.touring #float,body.touring #sheet{visibility:hidden}
   <button class="ib" id="r-n" aria-label="North"><svg id="cmp" viewBox="0 0 24 24"><path d="M12 3l4 9h-8z" fill="#C8102E"/><path d="M12 21l-4-9h8z" fill="currentColor" opacity=".55"/><text x="12" y="9.6" text-anchor="middle" font-size="5" fill="#fff" font-family="sans-serif" font-weight="700">N</text></svg></button>
 </div>
 <div id="edbar" class="ui" hidden>
-  <div class="ed-top"><div class="ed-tx"><b>وضع المسح الميداني</b><span id="ed-n"></span></div><div class="ed-prog"><i id="ed-bar"></i></div></div>
-  <div class="ed-btns">
-    <button class="btn" id="ed-list">📋 القائمة</button>
-    <button class="btn" id="ed-new">➕ معدّة</button>
-    <button class="btn" id="ed-lm">📌 معلم</button>
-    <button class="btn" id="ed-undo">↩︎</button>
-    <button class="btn pri" id="ed-send">إرسال</button>
-    <button class="btn" id="ed-done">إنهاء</button>
+  <div class="ed-top"><div class="ed-tx"><b>المسح الميداني</b><span id="ed-n"></span></div><div class="ed-prog"><i id="ed-bar"></i></div></div>
+  <div class="ed-task" id="ed-task">
+    <span class="chipicon" id="tk-ic"></span>
+    <div class="tk-tx"><small>المعدّة التالية — اذهب إليها:</small><b id="tk-code"></b><span id="tk-loc"></span></div>
+  </div>
+  <button class="btn pri big" id="tk-rec">📍 أنا عندها الآن — سجّل مكانها</button>
+  <div class="ed-btns"><button class="btn" id="tk-skip">تخطَّ ⟵</button><button class="btn" id="tk-more">خيارات ⋯</button><button class="btn" id="ed-done">إنهاء</button></div>
+  <div class="ed-more" id="ed-more" hidden>
+    <button class="btn" id="ed-list">📋 قائمة كل المعدات</button>
+    <button class="btn" id="ed-new">➕ إضافة معدّة غير موجودة</button>
+    <button class="btn" id="ed-lm">📌 تسجيل زاوية مبنى أو صف</button>
+    <button class="btn" id="ed-zone">🔁 الانتقال للقسم الآخر</button>
+    <button class="btn" id="ed-undo">↩︎ تراجع عن آخر تسجيل</button>
+    <button class="btn pri" id="ed-send">📤 إرسال النتائج</button>
   </div>
 </div>
 <div id="svlist" class="ui sv-modal" hidden><div class="sv-box">
@@ -820,8 +836,9 @@ function apply(){
 }
 function area(){
   const top=$(".brand").getBoundingClientRect().bottom+10;
-  let panelTop=$("#panel").getBoundingClientRect().top;
-  if($("#float").style.display!=="none")panelTop=Math.min(panelTop,$("#float").getBoundingClientRect().top);
+  const pr=$("#panel").getBoundingClientRect();let panelTop=pr.height?pr.top:innerHeight;
+  const fr=$("#float").getBoundingClientRect();if(fr.height)panelTop=Math.min(panelTop,fr.top);
+  if(typeof editing!=="undefined"&&editing){const er=$("#edbar").getBoundingClientRect();if(er.height)panelTop=Math.min(panelTop,er.top);}
   panelTop-=10;
   return {l:8,t:top,r:innerWidth-8,b:Math.max(top+120,panelTop)};
 }
@@ -929,7 +946,7 @@ function render(){
     frag.appendChild(b);
   });
   stage.appendChild(frag);
-  fit(false);applyFilter();markSel();if(typeof drawMe==="function")drawMe();if(typeof updCompass==="function")updCompass();if(typeof updEd==="function")updEd();setTimeout(declutter,80);
+  fit(false);applyFilter();markSel();if(typeof drawMe==="function")drawMe();if(typeof updCompass==="function")updCompass();if(typeof updEd==="function")updEd();setTimeout(declutter,80);if(editing&&TASK){const el=stage.querySelector(`.mk[data-id="${CSS.escape(TASK.id)}"]`);if(el)el.classList.add("target");}
 }
 function applyFilter(){stage.dataset.cat=cat;stage.querySelectorAll(".mk").forEach(m=>m.classList.toggle("dim",cat!=="all"&&m.dataset.c!==cat));
   if(mode==="sat"&&cat==="all"&&!applyFilter.told){applyFilter.told=1;setTimeout(()=>toast(lang==="ar"?"قرّب الخريطة أو اختر نوع المعدّة من الأسفل لعرض الطفايات والخراطيم.":"Zoom in or pick a category below to show extinguishers and hoses.",5000),900);}}
@@ -1045,8 +1062,8 @@ function stageToItem(sx,sy){ /* stage px -> drawing coords (x, crop y) */
   return [k[0],(k[1]-.076)/.7999];}
 function toggleEdit(on){editing=on??!editing;document.body.classList.toggle("editing",editing);$("#b-edit").classList.toggle("on",editing);
   $("#edbar").hidden=!editing;if(editing){placeEd();gtStop&&gtStop();updEd();
-    toast("📋 القائمة: المعدات المتبقية. اضغط على أي معدّة وأنت واقف عندها ثم «سجّل مكان هذه المعدّة». ➕ لإضافة معدّة جديدة، 📌 لتسجيل زوايا المباني والصفوف.",9000);}}
-function placeEd(){const f=$("#float").getBoundingClientRect();$("#edbar").style.bottom=(innerHeight-f.top+8)+"px";}
+    nextTask(true);toast("روح للمعدّة الظاهرة في الأسفل، وإذا وصلت لها اضغط «سجّل».",5000);}}
+function placeEd(){$("#edbar").style.bottom="";}
 addEventListener("resize",()=>editing&&placeEd());
 $("#b-edit").onclick=()=>toggleEdit();
 $("#ed-done").onclick=()=>toggleEdit(false);
@@ -1116,7 +1133,7 @@ function openForm(kind){FORM=kind;$("#sf-title").textContent=kind==="new"?"إض�
   $("#sf-name-l").textContent=kind==="new"?"رقم المعدّة (مثل F.E 59 أو حنفية 3)":"وصف النقطة";
   $("#sf-names").innerHTML=kind==="new"?"":["زاوية مبنى","زاوية مظلة","بداية صف تخزين","نهاية صف تخزين","طرف السور","بوابة","عمود إنارة","أخرى"].map(v=>`<option value="${v}">`).join("");
   $("#sf-name").value="";$("#sf-note").value="";$("#svform").hidden=false;setTimeout(()=>$("#sf-name").focus(),50);}
-$("#ed-new").onclick=()=>openForm("new");$("#ed-lm").onclick=()=>openForm("lm");$("#sf-x").onclick=()=>$("#svform").hidden=true;
+$("#ed-new").onclick=()=>{$("#ed-more").hidden=true;openForm("new");};$("#ed-lm").onclick=()=>{$("#ed-more").hidden=true;openForm("lm");};$("#sf-x").onclick=()=>$("#svform").hidden=true;
 $("#sf-go").onclick=()=>{const name=$("#sf-name").value.trim();if(!name){toast("اكتب الرقم أو الوصف أولًا",2500);return;}
   const note=$("#sf-note").value.trim();$("#svform").hidden=true;
   if(FORM==="lm"){capture(`تسجيل معلم: ${name}`,(la,lo,acc)=>{LMK.push({n:name,note,la:+la.toFixed(7),lo:+lo.toFixed(7),acc:Math.round(acc),t:Date.now()});saveSurvey();toast(`تم تسجيل «${name}» ✅ (± ${Math.round(acc)} م)`,4000);});return;}
@@ -1126,6 +1143,28 @@ $("#sf-go").onclick=()=>{const name=$("#sf-name").value.trim();if(!name){toast("
     const n={uid:Date.now().toString(36),zone,c:ty[0],code:name,ar:ty[1],en:ty[2],note,x:+k[0].toFixed(5),y:+k[1].toFixed(5),la:+la.toFixed(7),lo:+lo.toFixed(7),acc:Math.round(acc)};
     NEWIT.push(n);const it=addNewItem(n);saveSurvey();if(zone!==window.zone){}go(zone,true);setTimeout(()=>{render();select(it);},150);
     toast(`تمت إضافة ${name} ✅ (± ${Math.round(acc)} م)`,4000);});};
+/* guided task: one item at a time */
+let TASK=null,SKIP=new Set();
+function nextTask(first){const all=svItems();let pool=all.filter(i=>!isDone(i)&&!SKIP.has(i.id));
+  if(!pool.length&&SKIP.size){SKIP.clear();pool=all.filter(i=>!isDone(i));}
+  const inZone=pool.filter(i=>i.zone===zone);TASK=(inZone[0]||pool[0])||null;showTask();}
+function showTask(){stage.querySelectorAll(".mk.target").forEach(e=>e.classList.remove("target"));
+  if(!TASK){$("#tk-code").textContent="اكتمل المسح 🎉";$("#tk-loc").textContent="اضغط «خيارات» ثم «إرسال النتائج»";$("#tk-ic").innerHTML="";$("#tk-rec").disabled=true;return;}
+  $("#tk-rec").disabled=false;
+  if(TASK.zone!==zone){go(TASK.zone,true);setTimeout(showTask,200);return;}
+  $("#tk-code").textContent=TASK.code;$("#tk-loc").textContent=`${TASK.ar}${TASK.loc?" · "+TASK.loc:""}`;
+  $("#tk-ic").innerHTML=`<span class="mk" data-c="${TASK.c}">${signHTML(TASK)}</span>`;
+  const el=stage.querySelector(`.mk[data-id="${CSS.escape(TASK.id)}"]`);if(el)el.classList.add("target");
+  const s=V.s;V.s=Math.max(V.s,V.fit*2.2);const pp=posOf(TASK),a=area();const bar=$("#edbar").getBoundingClientRect();
+  V.x=(a.l+a.r)/2-pp[0]*V.s;V.y=(a.t+a.b)/2-pp[1]*V.s;animate(true);apply();}
+$("#tk-skip").onclick=()=>{if(TASK)SKIP.add(TASK.id);nextTask();};
+$("#tk-more").onclick=()=>{$("#ed-more").hidden=!$("#ed-more").hidden;};
+$("#ed-zone").onclick=()=>{$("#ed-more").hidden=true;go(zone==="yard"?"warehouse":"yard",true);setTimeout(()=>nextTask(),250);};
+$("#tk-rec").onclick=()=>{const it=TASK;if(!it)return;
+  capture(`تسجيل مكان ${it.code}`,(la,lo,acc)=>{const k=gpsToZone(la,lo,it.zone);
+    if(!k){toast("موقعك الحالي خارج حدود هذا القسم، لم يُسجَّل شيء.");return;}
+    RAW[it.id]=[+la.toFixed(7),+lo.toFixed(7),Math.round(acc)];setItemPos(it,k[0],k[1],"gps");saveSurvey();
+    toast(`تم تسجيل ${it.code} ✅`,2500);nextTask();});};
 /* survey checklist */
 let SVF="todo";
 const SURVEY_CATS=["fe","fh","ex","ap","crit","gate","safe"];
@@ -1133,7 +1172,7 @@ function svItems(){return ITEMS.filter(i=>SURVEY_CATS.includes(i.c)&&!i.isnew).s
 function isDone(i){return !!(EDITS[i.id]&&(EDITS[i.id].src==="gps"||EDITS[i.id].src==="drag"));}
 function renderList(){const L=svItems().filter(i=>SVF==="all"||(SVF==="done"?isDone(i):!isDone(i)));
   $("#sv-ul").innerHTML=L.map(i=>`<li><button data-id="${i.id}"><span class="chipicon"><span class="mk" data-c="${i.c}">${signHTML(i)}</span></span><span class="nm">${i.code}<small>${ZONES[i.zone].ar}${i.loc?" · "+i.loc:""}</small></span><span class="st${isDone(i)?" ok":""}">${isDone(i)?(EDITS[i.id].src==="gps"?"GPS ✓":"سحب ✓"):"لم يُسجَّل"}</span></button></li>`).join("")||`<li style="padding:14px;color:var(--muted);font-size:13px">لا يوجد عناصر هنا</li>`;
-  $("#sv-ul").querySelectorAll("button").forEach(b=>b.onclick=()=>{const it=ITEMS_BY_ID[b.dataset.id];$("#svlist").hidden=true;select(it);});}
+  $("#sv-ul").querySelectorAll("button").forEach(b=>b.onclick=()=>{const it=ITEMS_BY_ID[b.dataset.id];$("#svlist").hidden=true;$("#ed-more").hidden=true;TASK=it;showTask();});}
 $("#ed-list").onclick=()=>{renderList();$("#svlist").hidden=false;};$("#sv-x").onclick=()=>$("#svlist").hidden=true;
 document.querySelectorAll(".sv-tabs button").forEach(b=>b.onclick=()=>{SVF=b.dataset.f;document.querySelectorAll(".sv-tabs button").forEach(x=>x.setAttribute("aria-pressed",x===b));renderList();});
 
