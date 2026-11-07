@@ -223,6 +223,31 @@ html[dir="rtl"] .sos-ul .nm span{text-align:right}
 .pg-row.ok button{background:var(--surface-2);color:var(--ink)}
 .lmk{position:absolute;width:0;height:0;z-index:31;display:none;pointer-events:none}body.editing .lmk{display:block}
 .lmk span{position:absolute;left:0;top:0;transform:translate(-50%,-50%) scale(var(--k,1));white-space:nowrap;background:#00843D;color:#fff;border:2px solid #fff;border-radius:999px;padding:1px 7px 1px 5px;font-size:10.5px;box-shadow:0 1px 4px rgba(0,0,0,.3)}
+/* compact chrome */
+#top .tools .ib.more{display:none}body.menu-open #top .tools .ib.more{display:grid}
+#b-menu .m2{display:none}body.menu-open #b-menu .m1{display:none}body.menu-open #b-menu .m2{display:block}body.menu-open #b-menu{background:#0A1E4F;color:#fff}
+#rot #r-v{display:none!important}#rot #r-l,#rot #r-r,#rot #r-t{display:none}body.menu-open #rot #r-l,body.menu-open #rot #r-r,body.menu-open #rot #r-t{display:grid}
+#panel #chips,#panel #hint{display:none!important}body.chips-open #panel #chips{display:flex!important}
+.search .fbtn{border:0;background:none;color:var(--muted);width:34px;height:34px;display:grid;place-items:center;flex:none}.search .fbtn svg{width:20px;height:20px}
+body.chips-open .search .fbtn{color:var(--brand)}
+#top .brand{padding-block:8px!important}#top .brand h1{font-size:14px!important}#top .brand p{font-size:12px!important}#top .brand .logo{height:34px!important}
+/* watermark */
+#wm{position:fixed;inset:0;pointer-events:none;z-index:5;opacity:.07;background-repeat:repeat;background-size:340px 200px}
+html[data-theme="dark"] #wm{opacity:.09;filter:invert(1)}
+#wmstamp{position:fixed;z-index:6;pointer-events:none;inset-inline-start:12px;bottom:var(--wmb,190px);display:flex;flex-direction:column;line-height:1.3;font-family:var(--fd);color:rgba(10,30,79,.55);text-shadow:0 1px 0 rgba(255,255,255,.7);font-size:10.5px}
+#wmstamp span{font-size:9.5px}#wmstamp time{font-size:10px;direction:ltr;text-align:start}
+html[data-theme="dark"] #wmstamp{color:rgba(255,255,255,.55);text-shadow:0 1px 0 rgba(0,0,0,.6)}
+/* route */
+#sheet .btn.route{width:100%;margin-top:8px;background:#0A1E4F;color:#fff;display:flex;justify-content:center;align-items:baseline;gap:8px}#sheet .btn.route span{font-size:12px;opacity:.75}
+#route{top:calc(env(safe-area-inset-top,0px) + 86px);inset-inline:64px;z-index:23;display:flex;align-items:center;gap:10px;background:#0A1E4F;color:#fff;border-radius:16px;padding:8px 10px;box-shadow:0 8px 24px rgba(0,0,0,.3)}
+#route[hidden]{display:none}#route .ri{font-size:22px}#route .rt{flex:1;line-height:1.35}#route b{display:block;font-family:var(--fd);font-weight:400;font-size:14px}#route small{font-size:12px;opacity:.85}
+#route .sh-close{background:rgba(255,255,255,.15);color:#fff}
+.rsvg{position:absolute;left:0;top:0;pointer-events:none;overflow:visible}
+.rsvg .halo{stroke:#fff;stroke-width:9;fill:none;stroke-linecap:round;stroke-linejoin:round;opacity:.9}
+.rsvg .ln{stroke:#0080FF;stroke-width:5;fill:none;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:2 10;animation:rdash 1s linear infinite}
+@keyframes rdash{to{stroke-dashoffset:-12}}
+.sf-chk{display:flex;gap:8px;align-items:center;font-size:13.5px}
+#pl-custom[hidden]{display:none!important}#pl-custom input{min-width:0;flex:1;font:inherit;padding:8px;border:1px solid var(--line);border-radius:10px;background:var(--surface-2);color:var(--ink)}
 .foot{font-size:10.5px;color:var(--muted);text-align:center;line-height:1.5;margin-top:-2px}
 .foot span{direction:ltr;unicode-bidi:isolate}
 .tabs button,.chip,.seg button,.tourbtn,.btn,.ib,.sh-title h2,.gt-tx b,.blabel,.zlabel,#results .t{font-family:var(--fd)}
@@ -331,6 +356,9 @@ html[dir="ltr"] .blabel{padding:5px 6px 5px 12px}
 </head>
 <body>
 <div id="map"><div id="stage"></div></div>
+<div id="wm" aria-hidden="true"></div>
+<div id="wmstamp" aria-hidden="true"><b>دائرة المستودعات وساحات التخلص - حائل</b><span dir="ltr">Warehouses &amp; Disposal Yards Div. - Hail</span><time id="wmtime"></time></div>
+<div id="route" class="ui" hidden><span class="ri">🧭</span><div class="rt"><b id="rt-t"></b><small id="rt-s"></small></div><button class="sh-close" id="rt-x" aria-label="إغلاق">×</button></div>
 
 <header id="top" class="ui">
   <div class="brand">
@@ -343,15 +371,16 @@ html[dir="ltr"] .blabel{padding:5px 6px 5px 12px}
   </div>
   <div class="tools">
     <button class="ib loc" id="b-loc" aria-label="موقعي"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="8"/></svg></button>
-    <button class="ib" id="b-lang" aria-label="Language">EN</button>
-    <button class="ib" id="b-theme" aria-label="Theme">
+    <button class="ib sos" id="b-sos" aria-label="أرقام الطوارئ" title="أرقام الطوارئ"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6.6 10.8a15.1 15.1 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.25 11.4 11.4 0 0 0 3.6.57 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.45.57 3.57a1 1 0 0 1-.25 1z"/></svg></button>
+    <button class="ib" id="b-menu" aria-label="المزيد" title="المزيد"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path class="m1" d="M4 7h16M4 12h16M4 17h16"/><path class="m2" d="M6 6l12 12M18 6 6 18"/></svg></button>
+    <button class="ib more" id="b-lang" aria-label="Language">EN</button>
+    <button class="ib more" id="b-theme" aria-label="Theme">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg>
     </button>
-    <button class="ib" id="b-edit" aria-label="تعديل المواقع" title="تعديل المواقع"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg></button>
-    <button class="ib sos" id="b-sos" aria-label="أرقام الطوارئ" title="أرقام الطوارئ"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6.6 10.8a15.1 15.1 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.25 11.4 11.4 0 0 0 3.6.57 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.45.57 3.57a1 1 0 0 1-.25 1z"/></svg></button>
-    <button class="ib" id="b-clean" aria-label="إخفاء الرموز" title="إخفاء الرموز والمسميات"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/><path class="x" d="M3 3l18 18"/></svg></button>
-    <a class="ib" href="intro.html" aria-label="العرض التعريفي" title="العرض التعريفي" style="color:inherit;text-decoration:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg></a>
-    <button class="ib" id="b-fit" aria-label="Reset view">
+    <button class="ib more" id="b-edit" aria-label="تعديل المواقع" title="تعديل المواقع"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg></button>
+    <button class="ib more" id="b-clean" aria-label="إخفاء الرموز" title="إخفاء الرموز والمسميات"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/><path class="x" d="M3 3l18 18"/></svg></button>
+    <a class="ib more" href="intro.html" aria-label="العرض التعريفي" title="العرض التعريفي" style="color:inherit;text-decoration:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg></a>
+    <button class="ib more" id="b-fit" aria-label="Reset view">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
     </button>
   </div>
@@ -367,12 +396,13 @@ html[dir="ltr"] .blabel{padding:5px 6px 5px 12px}
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
     <input id="q" type="search" autocomplete="off" enterkeyhint="search">
     <button class="clr" id="q-clr" aria-label="Clear">×</button>
+    <button class="fbtn" id="q-flt" aria-label="الفلاتر" title="الفلاتر"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 6h16M7 12h10M10 18h4"/></svg></button>
   </div>
   <ul id="results"></ul>
   <div class="tabs" role="tablist" id="tabs"></div>
   <div class="chips" id="chips"></div>
   <p class="hint" id="hint"></p>
-  <div class="foot">إدارة المستودعات وساحات التخلص - الوسطى<br><span>Central Warehouses &amp; Disposal Yards Dept.</span> | v1.0</div>
+
 </section>
 
 <section id="sheet" class="ui" aria-live="polite">
@@ -388,6 +418,7 @@ html[dir="ltr"] .blabel{padding:5px 6px 5px 12px}
     <button class="btn" id="sh-next"></button>
     <button class="btn pri" id="sh-zoom"></button>
   </div>
+  <button class="btn route" id="sh-route">🧭 المسار إلى هنا<span>Directions</span></button>
   <button class="btn gps" id="sh-gps">📍 سجّل مكان هذه المعدّة من موقعي الحالي</button>
   <div class="sh-edit"><button class="btn" id="sh-ren">✏️ تعديل الاسم والوصف</button><button class="btn" id="sh-pho">📷 إضافة صورة</button></div>
 </section>
@@ -414,6 +445,7 @@ html[dir="ltr"] .blabel{padding:5px 6px 5px 12px}
     <button class="btn" id="ed-zone">🔁 الانتقال للقسم الآخر</button>
     <button class="btn" id="ed-undo">↩︎ تراجع عن آخر تسجيل</button>
     <button class="btn" id="ed-photo">📷 صورة لمكاني الحالي</button>
+    <button class="btn" id="ed-plan" style="grid-column:1/-1">🗺️ تصدير المخطط (كروكي) بمقياس رسم</button>
     <button class="btn pri" id="ed-send">📤 إرسال النتائج</button>
   </div>
 </div>
@@ -452,15 +484,24 @@ html[dir="ltr"] .blabel{padding:5px 6px 5px 12px}
   <p id="pv-n" class="sf-hint"></p><div class="ed-row"><button class="btn" id="pv-note">✏️ ملاحظة</button><button class="btn" id="pv-del">🗑️ حذف</button></div>
 </div></div>
 <div id="sos" class="ui sv-modal" hidden><div class="sv-box sos-box">
-  <div class="sv-head"><h3>أرقام الطوارئ<small>Emergency Numbers</small></h3><button class="sh-close" id="sos-x">×</button></div>
+  <div class="sv-head"><h3>أرقام التواصل في حالات الطوارئ<small>Emergency Contact Numbers</small></h3><button class="sh-close" id="sos-x">×</button></div>
   <ul class="sos-ul" id="sos-nat"></ul>
-  <h4 class="sos-h">مسؤولو الموقع<small>Site Contacts</small></h4>
-  <ul class="sos-ul" id="sos-site"></ul>
 </div></div>
 <div id="prog" class="ui sv-modal" hidden><div class="sv-box">
   <div class="sv-head"><h3>التقدّم<small>Progress</small></h3><button class="sh-close" id="pg-x">×</button></div>
   <div class="pg-cards" id="pg-cards"></div>
   <div id="pg-body" style="overflow:auto"></div>
+</div></div>
+<div id="planm" class="ui sv-modal" hidden><div class="sv-box">
+  <div class="sv-head"><h3>تصدير المخطط<small>Export site plan</small></h3><button class="sh-close" id="pl-x">×</button></div>
+  <label class="sf-row"><span>القسم</span><select id="pl-zone"><option value="yard">الساحة الخارجية</option><option value="warehouse">المستودع المسقوف</option></select></label>
+  <label class="sf-row"><span>مقاس الورق</span><select id="pl-size"><option>A4</option><option selected>A3</option><option>A2</option><option>A1</option><option>A0</option><option value="custom">مقاس مخصص (سم)</option></select></label>
+  <div class="sf-row" id="pl-custom" hidden><span>العرض × الطول (سم)</span><div style="display:flex;gap:6px"><input id="pl-w" type="number" value="50" inputmode="decimal"><input id="pl-h" type="number" value="35" inputmode="decimal"></div></div>
+  <label class="sf-row"><span>مقياس الرسم</span><select id="pl-scale"><option value="auto">تلقائي (أكبر مقياس يناسب الورقة)</option><option>200</option><option>250</option><option>500</option><option>750</option><option>1000</option><option>1500</option><option>2000</option><option>2500</option></select></label>
+  <label class="sf-chk"><input type="checkbox" id="pl-eq" checked> إظهار المعدات وأرقامها</label>
+  <label class="sf-chk"><input type="checkbox" id="pl-lb" checked> إظهار أسماء المباني</label>
+  <div class="ed-row"><button class="btn pri" id="pl-go">🖨️ إنشاء وطباعة / PDF</button><button class="btn" id="pl-svg">⬇️ تنزيل SVG</button></div>
+  <p class="sf-hint">الطباعة: من نافذة المخطط اضغط «طباعة»، ثم اختر الطابعة أو «حفظ كملف PDF». القياسات مأخوذة من إحداثيات الموقع الحقيقية.</p>
 </div></div>
 <div id="toast" role="status"></div>
 <div id="gtcard" class="ui" hidden>
@@ -566,7 +607,7 @@ function makeView(S){
     return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H()}" width="${W}" height="${H()}">${out}</svg>`;
   }
   set(0,40);
-  return {render,T,inv,get W(){return W},get H(){return H()},labels:S.labels,set,get yaw(){return yaw},get elev(){return elev},center:[S.cx,S.cy]};
+  return {render,T,inv,get W(){return W},get H(){return H()},labels:S.labels,set,get yaw(){return yaw},get elev(){return elev},center:[S.cx,S.cy],solids:S.solids};
 }
 
 /* ---- decorations (work from any viewing angle) ---- */
@@ -1014,7 +1055,7 @@ function reproject(lo){if(mode!=="sat")return;const m=model(zone);
   V.W=m.v.W;V.H=m.v.H;stage.style.width=V.W+"px";stage.style.height=V.H+"px";
   stage.querySelectorAll(".mk").forEach(el=>{const it=ITEMS_BY_ID[el.dataset.id];if(!it)return;const p=posOf(it);el.style.left=p[0]+"px";el.style.top=p[1]+"px";});
   LBL.forEach(({el,l})=>{const p=m.v.T(l.x,l.y,l.z);el.style.left=p[0]+"px";el.style.top=p[1]+"px";});
-  drawMe();updCompass();drawPh();drawLm();if(!lo)setTimeout(declutter,40);}
+  drawMe();updCompass();drawPh();drawLm();drawRoute();if(!lo)setTimeout(declutter,40);}
 function render(){
   const Z=ZONES[zone];stage.innerHTML="";LBL=[];
   const iso=mode==="sat";stage.classList.toggle("iso",iso);document.body.classList.toggle("is3d",iso);
@@ -1039,7 +1080,7 @@ function render(){
     frag.appendChild(b);
   });
   stage.appendChild(frag);
-  fit(false);applyFilter();markSel();if(typeof drawMe==="function")drawMe();if(typeof updCompass==="function")updCompass();if(typeof updEd==="function")updEd();if(typeof drawPh==="function")drawPh();if(typeof drawLm==="function")drawLm();setTimeout(declutter,80);if(editing&&TASK){const el=stage.querySelector(`.mk[data-id="${CSS.escape(TASK.id)}"]`);if(el)el.classList.add("target");}
+  fit(false);applyFilter();markSel();if(typeof drawMe==="function")drawMe();if(typeof updCompass==="function")updCompass();if(typeof updEd==="function")updEd();if(typeof drawPh==="function")drawPh();if(typeof drawLm==="function")drawLm();if(typeof drawRoute==="function")drawRoute();setTimeout(declutter,80);if(editing&&TASK){const el=stage.querySelector(`.mk[data-id="${CSS.escape(TASK.id)}"]`);if(el)el.classList.add("target");}
 }
 function applyFilter(){stage.dataset.cat=cat;stage.querySelectorAll(".mk").forEach(m=>m.classList.toggle("dim",cat!=="all"&&m.dataset.c!==cat));
   if(mode==="sat"&&cat==="all"&&!applyFilter.told){applyFilter.told=1;setTimeout(()=>toast(lang==="ar"?"قرّب الخريطة أو اختر نوع المعدّة من الأسفل لعرض الطفايات والخراطيم.":"Zoom in or pick a category below to show extinguishers and hoses.",5000),900);}}
@@ -1361,8 +1402,7 @@ function showTask(){stage.querySelectorAll(".mk.target").forEach(e=>e.classList.
 const NATIONAL=[["999","الشرطة","Police","#1D3E9E","🚓"],["998","الدفاع المدني","Civil Defense","#C8102E","🚒"],["997","الهلال الأحمر (الإسعاف)","Red Crescent (Ambulance)","#E8432E","🚑"]];
 const SITE_CONTACTS=[];
 function openSos(){$("#sos-nat").innerHTML=NATIONAL.map(([n,ar,en,c,e])=>`<li><span class="ic" style="background:${c}">${e}</span><span class="nm"><b>${ar}</b><span>${en}</span></span><a href="tel:${n}">${n}</a></li>`).join("");
-  $("#sos-site").innerHTML=SITE_CONTACTS.length?SITE_CONTACTS.map(c=>`<li><span class="ic" style="background:#0A1E4F">👷</span><span class="nm"><b>${c.ar}</b><span>${c.en}</span></span><a class="site" href="tel:${c.tel.replace(/\s/g,"")}">${c.tel}</a></li>`).join("")
-    :`<li class="sos-empty">ستُضاف أرقام مسؤولي الموقع قريبًا<br><span dir="ltr">Site contact numbers will be added soon</span></li>`;
+  if(SITE_CONTACTS.length)$("#sos-nat").insertAdjacentHTML("beforeend",SITE_CONTACTS.map(c=>`<li><span class="ic" style="background:#0A1E4F">👷</span><span class="nm"><b>${c.ar}</b><span>${c.en}</span></span><a class="site" href="tel:${c.tel.replace(/\s/g,"")}">${c.tel}</a></li>`).join(""));
   $("#sos").hidden=false;}
 $("#b-sos").onclick=openSos;$("#sos-x").onclick=()=>$("#sos").hidden=true;
 /* survey (edit) mode is hidden from the public; enabled on this device via ?survey=hail-sa, disabled via ?survey=off */
@@ -1370,6 +1410,122 @@ $("#b-sos").onclick=openSos;$("#sos-x").onclick=()=>$("#sos").hidden=true;
   if(q==="hail-sa")localStorage.setItem("hsemap.surveyor","1");if(q==="off")localStorage.removeItem("hsemap.surveyor");
   on=localStorage.getItem("hsemap.surveyor")==="1";}catch(e){}
   if(!on)$("#b-edit").style.display="none";})();
+/* ---------- compact chrome ---------- */
+$("#b-menu").onclick=()=>document.body.classList.toggle("menu-open");
+$("#q-flt").onclick=()=>{document.body.classList.toggle("chips-open");setTimeout(placeWm,50);};
+/* hidden survey unlock: long-press the logo */
+(()=>{let tm=null;const lg=document.querySelector("#top .brand");if(!lg)return;
+  lg.addEventListener("pointerdown",()=>{tm=setTimeout(()=>{const c=prompt("رمز وضع المسح:");if(c==="hail-sa"){try{localStorage.setItem("hsemap.surveyor","1");}catch(e){}$("#b-edit").style.display="";document.body.classList.add("menu-open");toast("تم تفعيل وضع المسح ✅ — زر القلم ✏️ ظاهر الآن في القائمة",4000);}},1500);});
+  ["pointerup","pointerleave","pointercancel"].forEach(ev=>lg.addEventListener(ev,()=>clearTimeout(tm)));})();
+/* ---------- watermark: source + date/time on every screenshot ---------- */
+(()=>{const txt="دائرة المستودعات وساحات التخلص - حائل";
+  const sv=`<svg xmlns="http://www.w3.org/2000/svg" width="340" height="200"><g transform="rotate(-24 170 100)" font-family="Arial,sans-serif" font-size="15" font-weight="700" fill="#0A1E4F" text-anchor="middle"><text x="170" y="96">${txt}</text><text x="170" y="116" font-size="11">Warehouses &amp; Disposal Yards Div. - Hail</text></g></svg>`;
+  $("#wm").style.backgroundImage=`url("data:image/svg+xml;utf8,${encodeURIComponent(sv)}")`;
+  const tick=()=>{const d=new Date();const ds=d.toLocaleDateString("ar-SA-u-ca-gregory-nu-latn",{year:"numeric",month:"2-digit",day:"2-digit"});
+    const ts=d.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"});$("#wmtime").textContent=`${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,"0")}/${String(d.getDate()).padStart(2,"0")} · ${ts}`;};
+  tick();setInterval(tick,15000);})();
+function placeWm(){const r=$("#panel").getBoundingClientRect(),f=$("#float").getBoundingClientRect();let top=innerHeight;
+  if(r.height&&getComputedStyle($("#panel")).visibility!=="hidden")top=Math.min(top,r.top);if(f.height&&getComputedStyle($("#float")).visibility!=="hidden")top=Math.min(top,f.top);
+  const e=$("#edbar");if(e&&!e.hidden){const er=e.getBoundingClientRect();if(er.height)top=Math.min(top,er.top);}
+  const sh=$("#sheet");if(sh.classList.contains("on")){const sr=sh.getBoundingClientRect();top=Math.min(top,sr.top);}
+  document.documentElement.style.setProperty("--wmb",(innerHeight-top+8)+"px");}
+addEventListener("resize",placeWm);setInterval(placeWm,700);
+/* ---------- directions (walking route on the model) ---------- */
+const SCALE={"yard": {"mpp": 0.30660303067136896, "north": [0.27911212277339276, 0.9602585187963347]}, "warehouse": {"mpp": 0.1549132318769362, "north": [0.3394207209230258, 0.9406346656423488]}};
+const GRID={};
+function zoneWorldOf(it){if(it.zone==="yard")return it.w?it.w:ISO.K2S(it.x,pageY(it.y));return [it.x*ISO.PW,pageY(it.y)*ISO.PH];}
+function grid(z){if(GRID[z])return GRID[z];const m=model(z);const cs=z==="yard"?4:3;
+  const b=z==="yard"?[20,30,1160,1120]:[0,0,ISO.PW,ISO.PH];const W=Math.ceil((b[2]-b[0])/cs),H=Math.ceil((b[3]-b[1])/cs);const blk=new Uint8Array(W*H);
+  (m.v.solids||[]).forEach(s=>{if((s.z||0)>2)return;if((s.h||0)<2.5)return;if((s.x1-s.x0)*(s.y1-s.y0)<10)return;
+    const i0=Math.max(0,Math.floor((s.x0-b[0])/cs)),i1=Math.min(W-1,Math.floor((s.x1-b[0])/cs)),j0=Math.max(0,Math.floor((s.y0-b[1])/cs)),j1=Math.min(H-1,Math.floor((s.y1-b[1])/cs));
+    for(let j=j0;j<=j1;j++)for(let i=i0;i<=i1;i++)blk[j*W+i]=1;});
+  return GRID[z]={b,cs,W,H,blk};}
+function nearestFree(g,i,j){if(!g.blk[j*g.W+i])return [i,j];for(let r=1;r<60;r++)for(let dj=-r;dj<=r;dj++)for(let di=-r;di<=r;di++){if(Math.max(Math.abs(di),Math.abs(dj))!==r)continue;
+  const x=i+di,y=j+dj;if(x>=0&&y>=0&&x<g.W&&y<g.H&&!g.blk[y*g.W+x])return [x,y];}return [i,j];}
+function astar(g,s,e){const N=g.W*g.H,G=new Float32Array(N).fill(1e9),P=new Int32Array(N).fill(-1),C=new Uint8Array(N);const H=[];
+  const push=(f,n)=>{H.push([f,n]);let k=H.length-1;while(k){const p=(k-1)>>1;if(H[p][0]<=H[k][0])break;[H[p],H[k]]=[H[k],H[p]];k=p;}};
+  const pop=()=>{const top=H[0],last=H.pop();if(H.length){H[0]=last;let k=0;for(;;){const l=2*k+1,r=l+1;let m=k;if(l<H.length&&H[l][0]<H[m][0])m=l;if(r<H.length&&H[r][0]<H[m][0])m=r;if(m===k)break;[H[m],H[k]]=[H[k],H[m]];k=m;}}return top;};
+  const si=s[1]*g.W+s[0],ei=e[1]*g.W+e[0];G[si]=0;push(Math.hypot(e[0]-s[0],e[1]-s[1]),si);
+  const D=[[1,0,1],[-1,0,1],[0,1,1],[0,-1,1],[1,1,1.414],[1,-1,1.414],[-1,1,1.414],[-1,-1,1.414]];
+  while(H.length){const [,n]=pop();if(n===ei)break;if(C[n])continue;C[n]=1;const x=n%g.W,y=(n-x)/g.W;
+    for(const [dx,dy,w] of D){const X=x+dx,Y=y+dy;if(X<0||Y<0||X>=g.W||Y>=g.H)continue;const m=Y*g.W+X;if(g.blk[m])continue;if(dx&&dy&&(g.blk[y*g.W+X]||g.blk[Y*g.W+x]))continue;
+      const ng=G[n]+w;if(ng<G[m]){G[m]=ng;P[m]=n;push(ng+Math.hypot(e[0]-X,e[1]-Y),m);}}}
+  if(P[ei]<0&&ei!==si)return null;const out=[];for(let n=ei;n>=0;n=P[n]){out.push([n%g.W,Math.floor(n/g.W)]);if(n===si)break;}return out.reverse();}
+function los(g,a,b){const n=Math.ceil(Math.hypot(b[0]-a[0],b[1]-a[1])*2);for(let k=0;k<=n;k++){const x=Math.round(a[0]+(b[0]-a[0])*k/n),y=Math.round(a[1]+(b[1]-a[1])*k/n);if(g.blk[y*g.W+x])return false;}return true;}
+let ROUTE=null;
+function startPoint(z){if(me&&me[z]){if(z==="yard"&&me.yard.w)return {w:me.yard.w,from:"me"};if(z==="warehouse")return {w:[me.warehouse.k[0]*ISO.PW,me.warehouse.k[1]*ISO.PH],from:"me"};}
+  const gate=ITEMS.find(i=>i.zone===z&&(z==="yard"?i.code==="M":/^M\s?1$/.test(i.code)));return {w:gate?zoneWorldOf(gate):(z==="yard"?[560,905]:[ISO.PW*.45,ISO.PH*.9]),from:"gate"};}
+function routeTo(it){const z=it.zone,g=grid(z),st=startPoint(z),en=zoneWorldOf(it);
+  const cell=w=>[Math.max(0,Math.min(g.W-1,Math.floor((w[0]-g.b[0])/g.cs))),Math.max(0,Math.min(g.H-1,Math.floor((w[1]-g.b[1])/g.cs)))];
+  const s=nearestFree(g,...cell(st.w)),e=nearestFree(g,...cell(en));let p=astar(g,s,e);
+  if(!p){toast(lang==="ar"?"تعذّر حساب المسار":"Could not compute a route",2500);return;}
+  const sm=[p[0]];for(let k=1;k<p.length;k++){if(!los(g,sm[sm.length-1],p[k]))sm.push(p[k-1]);}sm.push(p[p.length-1]);
+  const W=sm.map(c=>[g.b[0]+(c[0]+.5)*g.cs,g.b[1]+(c[1]+.5)*g.cs]);W.unshift(st.w);W.push(en);
+  let d=0;for(let k=1;k<W.length;k++)d+=Math.hypot(W[k][0]-W[k-1][0],W[k][1]-W[k-1][1]);d*=SCALE[z].mpp;
+  ROUTE={zone:z,pts:W,item:it,dist:d,from:st.from};drawRoute();
+  const min=Math.max(1,Math.round(d/1.2/60));
+  $("#rt-t").textContent=(lang==="ar"?`المسار إلى ${it.code}`:`Route to ${it.code}`);
+  $("#rt-s").textContent=lang==="ar"?`حوالي ${Math.round(d)} م · ${min===1?"دقيقة":min+" دقائق"} مشيًا · ${st.from==="me"?"من موقعك الحالي":"من البوابة الرئيسية"}`:`≈ ${Math.round(d)} m · ${min} min walk · ${st.from==="me"?"from your location":"from the main gate"}`;
+  $("#route").hidden=false;closeSheet(true);
+  const xs=W.map(q=>model(z).v.T(q[0],q[1],0));const a=area();const x0=Math.min(...xs.map(q=>q[0])),x1=Math.max(...xs.map(q=>q[0])),y0=Math.min(...xs.map(q=>q[1])),y1=Math.max(...xs.map(q=>q[1]));
+  V.s=Math.min((a.r-a.l)/(x1-x0+120),(a.b-a.t)/(y1-y0+160),V.fit*4);V.x=(a.l+a.r)/2-(x0+x1)/2*V.s;V.y=(a.t+a.b)/2-(y0+y1)/2*V.s;animate(true);apply();}
+function drawRoute(){stage.querySelectorAll(".rsvg").forEach(e=>e.remove());if(!ROUTE||ROUTE.zone!==zone||mode!=="sat")return;
+  const m=model(zone);const pts=ROUTE.pts.map(q=>m.v.T(q[0],q[1],0.5).map(v=>v.toFixed(1)).join(",")).join(" ");
+  const e=m.v.T(ROUTE.pts[ROUTE.pts.length-1][0],ROUTE.pts[ROUTE.pts.length-1][1],0),s=m.v.T(ROUTE.pts[0][0],ROUTE.pts[0][1],0);
+  stage.insertAdjacentHTML("beforeend",`<svg class="rsvg" width="${V.W}" height="${V.H}" viewBox="0 0 ${V.W} ${V.H}"><polyline class="halo" points="${pts}"/><polyline class="ln" points="${pts}"/><circle cx="${s[0]}" cy="${s[1]}" r="7" fill="#0080FF" stroke="#fff" stroke-width="3"/><circle cx="${e[0]}" cy="${e[1]}" r="9" fill="#00B15C" stroke="#fff" stroke-width="3"/></svg>`);
+  const sv=stage.querySelector(".rsvg"),ms=document.getElementById("msvg");if(ms&&ms.nextSibling)stage.insertBefore(sv,ms.nextSibling);}
+$("#sh-route").onclick=()=>{if(selected)routeTo(selected);};
+$("#rt-x").onclick=()=>{ROUTE=null;drawRoute();$("#route").hidden=true;};
+/* ---------- export the plan (kroki) at a real scale ---------- */
+const PAPER={A4:[297,210],A3:[420,297],A2:[594,420],A1:[841,594],A0:[1189,841]};
+$("#ed-plan").onclick=()=>{$("#ed-more").hidden=true;$("#pl-zone").value=zone;$("#planm").hidden=false;};
+$("#pl-x").onclick=()=>$("#planm").hidden=true;
+$("#pl-size").onchange=()=>{$("#pl-custom").hidden=$("#pl-size").value!=="custom";};
+function buildPlan(){const z=$("#pl-zone").value,m=model(z),v=m.v;const sz=$("#pl-size").value;
+  let [PWmm,PHmm]=sz==="custom"?[Math.max(10,+$("#pl-w").value)*10,Math.max(10,+$("#pl-h").value)*10]:PAPER[sz];if(PHmm>PWmm)[PWmm,PHmm]=[PHmm,PWmm];
+  const y0=v.yaw,e0=v.elev;let svg=v.render({yaw:0,elev:90});
+  const bb=z==="yard"?[20,30,1160,1120]:[0,0,ISO.PW,ISO.PH];const A=v.T(bb[0],bb[1],0),B=v.T(bb[2],bb[3],0);
+  const vb=[Math.min(A[0],B[0]),Math.min(A[1],B[1]),Math.abs(B[0]-A[0]),Math.abs(B[1]-A[1])];
+  const ITm=ITEMS.filter(i=>i.zone===z&&i.c!=="fac").map(i=>{const w=zoneWorldOf(i);return {i,p:v.T(w[0],w[1],0)};});
+  const LB=v.labels.map(l=>({t:(LREN[l.text.ar]||l.text.ar),e:l.text.en,p:v.T(l.x,l.y,0)}));
+  v.set(y0,e0);
+  const mpp=SCALE[z].mpp,margin=12,tbW=Math.min(95,PWmm*.28),avW=PWmm-2*margin-tbW-8,avH=PHmm-2*margin;
+  const extW=vb[2]*mpp,extH=vb[3]*mpp;let sc=$("#pl-scale").value;
+  if(sc==="auto"){const need=Math.max(extW*1000/avW,extH*1000/avH);sc=[100,200,250,500,750,1000,1250,1500,2000,2500,3000,4000,5000,7500,10000].find(s=>s>=need)||10000;}else sc=+sc;
+  const dW=extW*1000/sc,dH=extH*1000/sc;const u=sc/(1000*mpp); /* svg units per paper mm */
+  let over="";if($("#pl-eq").checked)over+=ITm.map(({i,p})=>{const col={fe:"#C8102E",fh:"#C8102E",ap:"#00843D",ex:"#00843D",safe:"#00843D",crit:"#F6B40E",gate:"#0A1E4F",cam:"#555"}[i.c]||"#0A1E4F";
+    const r=1.6*u;return `<g><circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="${r.toFixed(2)}" fill="${col}" stroke="#fff" stroke-width="${(.35*u).toFixed(2)}"/><text x="${(p[0]+r*1.3).toFixed(1)}" y="${(p[1]+r*.5).toFixed(1)}" font-size="${(1.9*u).toFixed(2)}" font-family="Arial" font-weight="700" fill="#0A1E4F" stroke="#fff" stroke-width="${(.5*u).toFixed(2)}" paint-order="stroke">${i.code}</text></g>`;}).join("");
+  if($("#pl-lb").checked)over+=LB.map(l=>`<text x="${l.p[0].toFixed(1)}" y="${l.p[1].toFixed(1)}" font-size="${(2.6*u).toFixed(2)}" font-family="Arial" font-weight="700" text-anchor="middle" fill="#0A1E4F" stroke="#fff" stroke-width="${(.7*u).toFixed(2)}" paint-order="stroke">${l.t}</text><text x="${l.p[0].toFixed(1)}" y="${(l.p[1]+3*u).toFixed(1)}" font-size="${(2*u).toFixed(2)}" font-family="Arial" text-anchor="middle" fill="#334" stroke="#fff" stroke-width="${(.6*u).toFixed(2)}" paint-order="stroke">${l.e}</text>`).join("");
+  svg=svg.replace(/<svg[^>]*>/,`<svg xmlns="http://www.w3.org/2000/svg" viewBox="${vb.map(x=>x.toFixed(1)).join(" ")}" width="${dW.toFixed(1)}mm" height="${dH.toFixed(1)}mm" preserveAspectRatio="xMidYMid meet">`).replace("</svg>",over+"</svg>");
+  const nv=SCALE[z].north,ang=Math.atan2(nv[0],-nv[1])*180/Math.PI;
+  const bar=[10,20,25,50,100,200,250,500].find(L=>L*1000/sc>=avW*.18)||50;const barMm=bar*1000/sc;
+  const today=new Date();const ds=`${today.getFullYear()}/${String(today.getMonth()+1).padStart(2,"0")}/${String(today.getDate()).padStart(2,"0")}`;
+  const zn=ZONES[z];
+  return {svg,html:`<!doctype html><html dir="rtl"><head><meta charset="utf-8"><title>مخطط ${zn.ar} 1:${sc}</title><style>
+@page{size:${PWmm}mm ${PHmm}mm;margin:0}*{box-sizing:border-box}body{margin:0;font-family:"IBM Plex Sans Arabic",Arial,sans-serif;color:#0A1E4F;background:#888}
+.pg{width:${PWmm}mm;height:${PHmm}mm;background:#fff;position:relative;margin:0 auto;overflow:hidden}
+.frame{position:absolute;inset:${margin-4}mm;border:.5mm solid #0A1E4F}
+.dr{position:absolute;left:${margin}mm;top:${margin}mm;width:${avW}mm;height:${avH}mm;display:grid;place-items:center}
+.tb{position:absolute;right:${margin}mm;top:${margin}mm;bottom:${margin}mm;width:${tbW}mm;border-inline-start:.4mm solid #0A1E4F;padding:0 0 0 0;display:flex;flex-direction:column;gap:3mm;padding-inline-start:4mm;font-size:${Math.max(7,Math.min(11,tbW/9))}pt}
+.tb h1{margin:0;font-size:1.5em}.tb h2{margin:0;font-size:1.15em;font-weight:600}.tb .en{direction:ltr;text-align:right;color:#4A6286}
+.tb .k{display:flex;justify-content:space-between;border-bottom:.2mm solid #ccd;padding:1mm 0}.tb .k b{font-weight:700}
+.lg{display:grid;grid-template-columns:auto 1fr;gap:1.2mm 2mm;align-items:center}.lg i{width:3.2mm;height:3.2mm;border-radius:50%;display:inline-block}
+.na{width:16mm;height:16mm;margin:0 auto}.sb{direction:ltr}.bar{height:2.5mm;width:${barMm.toFixed(1)}mm;background:repeating-linear-gradient(90deg,#0A1E4F 0 ${(barMm/4).toFixed(2)}mm,#fff ${(barMm/4).toFixed(2)}mm ${(barMm/2).toFixed(2)}mm);border:.3mm solid #0A1E4F}
+.tools{position:fixed;top:10px;left:10px;display:flex;gap:8px}.tools button{font:inherit;font-size:15px;padding:10px 16px;border-radius:10px;border:0;background:#0A1E4F;color:#fff}
+@media print{body{background:#fff}.tools{display:none}}
+</style></head><body><div class="tools"><button onclick="print()">🖨️ طباعة / حفظ PDF</button></div><div class="pg"><div class="frame"></div>
+<div class="dr">${svg}</div>
+<div class="tb"><h1>دائرة المستودعات وساحات التخلص - حائل</h1><div class="en">Warehouses &amp; Disposal Yards Div. - Hail</div>
+<h2>مخطط الموقع — ${zn.ar}</h2><div class="en">Site Plan — ${zn.en}</div>
+<svg class="na" viewBox="-12 -12 24 24"><g transform="rotate(${ang.toFixed(1)})"><path d="M0 -10 L4 4 L0 1.5 L-4 4Z" fill="#C8102E"/><text y="-11.5" font-size="5" text-anchor="middle" font-family="Arial" font-weight="700" fill="#0A1E4F">N</text></g></svg>
+<div class="sb"><div class="bar"></div><div style="display:flex;justify-content:space-between;width:${barMm.toFixed(1)}mm;font-size:.85em"><span>0</span><span>${bar} m</span></div></div>
+<div class="k"><span>مقياس الرسم / Scale</span><b dir="ltr">1:${sc}</b></div><div class="k"><span>مقاس الورق / Paper</span><b dir="ltr">${sz==="custom"?(PWmm/10)+"×"+(PHmm/10)+" cm":sz}</b></div>
+<div class="k"><span>الأبعاد الكلية / Extent</span><b dir="ltr">${Math.round(extW)} × ${Math.round(extH)} m</b></div><div class="k"><span>التاريخ / Date</span><b dir="ltr">${ds}</b></div>
+${$("#pl-eq").checked?`<div class="lg"><i style="background:#C8102E"></i><span>طفاية / خرطوم حريق — FE / FH</span><i style="background:#00843D"></i><span>نقاط التجمع والمخارج والإسعاف — AP / EX</span><i style="background:#F6B40E"></i><span>نقاط حرجة — Critical</span><i style="background:#0A1E4F"></i><span>بوابات — Gates</span></div>`:""}
+<div style="margin-top:auto;font-size:.8em;color:#4A6286">المقاسات مستمدة من الإحداثيات الحقيقية للموقع (±${Math.round(z==="yard"?5:1)} م تقريبًا). للاستخدام الداخلي.<br><span dir="ltr">Dimensions derived from site GPS coordinates. Internal use.</span></div></div>
+</div></body></html>`,sc,sz};}
+$("#pl-go").onclick=()=>{const r=buildPlan();const w=window.open("","_blank");if(!w){toast("اسمح بالنوافذ المنبثقة ثم أعد المحاولة",3500);return;}w.document.open();w.document.write(r.html);w.document.close();$("#planm").hidden=true;};
+$("#pl-svg").onclick=()=>{const r=buildPlan();const blob=new Blob([r.svg],{type:"image/svg+xml"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=`site-plan-${$("#pl-zone").value}-1-${r.sc}.svg`;document.body.appendChild(a);a.click();a.remove();};
 $("#b-clean").onclick=()=>{const on=document.body.classList.toggle("clean");
   toast(on?(lang==="ar"?"تم إخفاء الرموز والمسميات — المجسّم فقط":"Markers and labels hidden — model only"):(lang==="ar"?"تم إظهار الرموز والمسميات":"Markers and labels shown"),2200);};
 $("#tk-skip").onclick=()=>{if(TASK)SKIP.add(TASK.id);nextTask();};
